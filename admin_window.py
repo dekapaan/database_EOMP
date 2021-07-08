@@ -8,17 +8,20 @@ import rsaidnumber
 
 class AdminGUI:
     def __init__(self, master):
+        # window set up
         self.master = master
         self.master.title("Admin")
         self.master.geometry('1010x620')
         self.master.config(bg="white")
 
+        # fame for option menu
         self.frame_options = Frame(self.master, bg='white', width=1010, height=620)
         self.frame_options.place(rely=0.5, relx=0.5, anchor=CENTER)
+
+        # Options buttons
         self.btn_modify_screen = Button(self.frame_options, text="Modify / Add / Remove", bg="#00769e", fg="white",
                                         border="0", relief="solid", activebackground="#00547c",
                                         activeforeground="white", width="30", command=self.modify_screen)
-
         self.btn_modify_screen.place(rely=0.45, relx=0.5, anchor=CENTER)
 
         self.btn_view_register = Button(self.frame_options, text="View register", bg="#00769e", fg="white", border="0",
@@ -32,9 +35,10 @@ class AdminGUI:
                                  command=self.logout)
         self.btn_logout.place(rely=0.55, relx=0.5, anchor=CENTER)
 
+        # modify /add / remove frame widgets
         self.frame_modify = Frame(self.master, width=1010, height=620, bg="grey")
-        # self.frame_modify.place(rely=0.5, relx=0.5, anchor=CENTER)
 
+        # table to view users
         self.tree_modify = ttk.Treeview(self.frame_modify)
         self.tree_modify['columns'] = ('ID No.', 'Name', 'Surname', 'Phone No.')
 
@@ -49,9 +53,12 @@ class AdminGUI:
         self.tree_modify.heading('Surname', text='Surname')
         self.tree_modify.heading('Phone No.', text='Phone no.')
 
-        self.pop_treeview()
+        self.pop_treeview()  # function to populate table
+
         self.tree_modify.place(rely=0, relx=0.5, anchor=N)
 
+        """frame for entry fields (user name, surname, ID, phone no and admin privilege info. Next of kin name and phone 
+        no)"""
         self.entry_frame = Frame(self.frame_modify, bg='white', width=801, height=350)
         self.entry_frame.place(rely=0.356, relx=0.1035, anchor=NW)
 
@@ -116,6 +123,7 @@ class AdminGUI:
 
         self.tree_modify.bind('<ButtonRelease-1>', self.send_data)
 
+        # update / add / remove / back buttons
         self.btn_update = Button(self.entry_frame, text="Update user", bg="#00769e", fg="white", border="0",
                                  relief="solid", activebackground="#00547c", activeforeground="white", width="15",
                                  command=self.update)
@@ -135,10 +143,11 @@ class AdminGUI:
                                       command=self.back)
         self.btn_back_modify.place(rely=1, relx=1, anchor=SE)
 
+        # variable to keep track of ID of highlighted user in table
         self.current_id = ''
 
+        # frame and widgets for sign in/out table
         self.frame_register = Frame(self.master, width=1010, height=620, bg='white')
-        # self.frame_register.place(rely=0.5, relx=0.5, anchor=CENTER)
 
         self.tree_register = ttk.Treeview(self.frame_register)
         self.tree_register['columns'] = ('Date', 'ID No.', 'Name', 'Time in', 'Time out')
@@ -156,10 +165,13 @@ class AdminGUI:
         self.tree_register.heading('Time in', text='Time in')
         self.tree_register.heading('Time out', text='Time out')
 
+        # Button to sign out user
         self.btn_sign_out = Button(self.frame_register, text="Sign user out", bg="#00769e", fg="white", border="0",
                                    relief="solid", activebackground="#00547c", activeforeground="white", width="28",
                                    command=self.sign_out_user)
         self.btn_sign_out.place(relx=0.5, y=300, anchor=CENTER)
+
+        # back button
         self.btn_back_register = Button(self.frame_register, text="Back", bg="#00769e", fg="white", border="0",
                                         relief="solid", activebackground="#00547c", activeforeground="white", width="28"
                                         , command=self.back)
@@ -169,14 +181,17 @@ class AdminGUI:
 
         self.tree_register.place(rely=0, relx=0.5, anchor=N)
 
+    # bring modify frame to front
     def modify_screen(self):
         self.frame_modify.place(rely=0.5, relx=0.5, anchor=CENTER)
         Misc.lift(self.frame_modify)
 
+    # back to main sign in/up screen
     def logout(self):
         self.master.destroy()
         import main
 
+    # Function that fetches user info from database and populates treeview widget
     def pop_treeview(self):
         mydb = mysql.connector.connect(user='lifechoices', password='@Lifechoices1234', host='127.0.0.1',
                                        database='lifechoices_online', auth_plugin='mysql_native_password')
@@ -190,6 +205,7 @@ class AdminGUI:
         for user in info:
             self.tree_modify.insert(parent='', index='end', text='', values=user)
 
+    # If combobox is set to yes, password field state normal. If not, state readonly
     def password_normal(self, event=None):
         if self.current_value.get() == 'Yes':
             self.entry_password.config(state='normal')
@@ -197,6 +213,7 @@ class AdminGUI:
         else:
             self.entry_password.config(state='readonly')
 
+    # Sends info of highlighted user to entry fields
     def send_data(self, event=None):
         current_item = self.tree_modify.focus()
         info = self.tree_modify.item(current_item)
@@ -209,7 +226,7 @@ class AdminGUI:
 
         mycursor.execute("select * from Users where ID like '%{}'".format(info[0]))
         info1 = mycursor.fetchall()
-        print(info1)
+
         self.entry_ID.delete(0, END)
         self.entry_name.delete(0, END)
         self.entry_surname.delete(0, END)
@@ -223,8 +240,10 @@ class AdminGUI:
         self.entry_name.insert(0, info[1])
         self.entry_surname.insert(0, info[2])
 
+        # check if user is an admin to fill admin fields
         mycursor.execute("select * from admin_users where ID='{}'".format(self.entry_ID.get()))
         info_admin = mycursor.fetchall()
+
         if info_admin:
             self.combo_admin_priv.current(0)
             self.entry_password.config(state='normal')
@@ -238,10 +257,11 @@ class AdminGUI:
 
         mycursor.execute("select * from next_of_kin where ID='{}'".format(self.entry_ID.get()))
         info_nex_of_kin = mycursor.fetchall()
-        print(info_nex_of_kin)
+
         self.entry_kin_name.insert(0, info_nex_of_kin[0][1])
         self.entry_kin_phone.insert(0, info_nex_of_kin[0][2])
 
+    # Function to update database where entry fields have been changed
     def update(self):
         mydb = mysql.connector.connect(user='lifechoices', password='@Lifechoices1234', host='127.0.0.1',
                                        database='lifechoices_online', auth_plugin='mysql_native_password')
@@ -251,13 +271,16 @@ class AdminGUI:
         mycursor.execute("select * from admin_users where ID='{}'".format(self.current_id))
         admin_exist = mycursor.fetchall()
 
+        # make sure password field is not empty before continuing (if combobox set to yes)
         if self.current_value.get() == 'Yes' and self.entry_password.get() == '':
             messagebox.showerror(message='Password entry field empty')
 
+        # make sure entry fields aren't empty
         elif self.entry_ID.get() == '' or self.entry_name.get() == '' or self.entry_surname.get() == '' or \
                 self.entry_surname == '' or self.entry_kin_name == '' or self.entry_kin_phone == '':
             messagebox.showerror(message='Check that all entry fields are not empty')
 
+        # update password
         elif self.current_value.get() == 'Yes' and admin_exist:
             query_admin = "update admin_users set password='{}' where ID='{}'".format(self.entry_password.get(),
                                                                                       self.current_id)
@@ -276,6 +299,7 @@ class AdminGUI:
             mydb.commit()
             messagebox.showinfo(message='Update successful')
 
+        # gives admin privileges to user
         elif self.current_value.get() == 'Yes' and not admin_exist:
             query_admin = "insert into admin_users (ID, password) values ('{}', '{}')".format(self.current_id,
                                                                                               self.entry_password.get()
@@ -295,6 +319,7 @@ class AdminGUI:
             mydb.commit()
             messagebox.showinfo(message='Update successful')
 
+        # If combobox set to no, deletes user from admin table (if user was admin)
         elif self.current_value.get() == 'No' and admin_exist:
             query_admin = "delete from admin_users where ID='{}'".format(self.current_id)
             mycursor.execute(query_admin)
@@ -315,8 +340,10 @@ class AdminGUI:
             mydb.commit()
             messagebox.showinfo(message='Update successful')
 
+        # update info in table
         self.pop_treeview()
 
+    # function to add new user to database
     def add(self):
         try:
             id_no = self.entry_ID.get()
@@ -371,6 +398,7 @@ class AdminGUI:
         except mysql.connector.errors.IntegrityError:
             messagebox.showerror(message='User with ID already exists')
 
+    # Function to remove user
     def remove(self):
         id_no = self.current_id
         mydb = mysql.connector.connect(user='lifechoices', password='@Lifechoices1234', host='127.0.0.1',
@@ -396,12 +424,15 @@ class AdminGUI:
         mycursor.execute(query)
         mydb.commit()
 
+        # update info of table
         self.pop_treeview()
 
+    # Place register(user sign in/out) frame to front
     def register_frame(self):
         self.frame_register.place(rely=0, relx=0, anchor=NW)
         Misc.lift(self.frame_register)
 
+    # Function to populate treeview table
     def pop_tree_register(self):
         mydb = mysql.connector.connect(user='lifechoices', password='@Lifechoices1234', host='127.0.0.1',
                                        database='lifechoices_online', auth_plugin='mysql_native_password')
@@ -416,6 +447,7 @@ class AdminGUI:
         for user in info:
             self.tree_register.insert(parent='', index='end', text='', values=user)
 
+    # Function which allows admin to sign a user out
     def sign_out_user(self):
         mydb = mysql.connector.connect(user='lifechoices', password='@Lifechoices1234', host='127.0.0.1',
                                        database='lifechoices_online', auth_plugin='mysql_native_password')
@@ -427,6 +459,7 @@ class AdminGUI:
         info = info['values']
         print(info)
 
+        # checks if user already signed out
         if info[4] != '--:--':
             messagebox.showerror(message="User already signed out")
 
@@ -447,11 +480,13 @@ class AdminGUI:
             mydb.commit()
             self.pop_tree_register()
 
+    # Back to admin options function
     def back(self):
         self.frame_options.place(rely=0.5, relx=0.5, anchor=CENTER)
         Misc.lift(self.frame_options)
 
 
+# instantiation
 root = Tk()
 app = AdminGUI(root)
 root.mainloop()

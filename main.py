@@ -51,19 +51,24 @@ class HomeScreen:
 
         # Sign_in widgets
         self.frame_sign = Frame(self.frame_log, bg="white", width="302", height="390")
-        # self.frame_sign.place(x=300, y=0)
 
+        # ID number
         self.frame_id = Frame(self.frame_sign)
         self.lbl_id = Label(self.frame_id, text="ID No.", bg="grey", width="8")
         self.entry_id = Entry(self.frame_id)
+
+        # sign in button
         self.btn_sign_in2 = Button(self.frame_sign, text="Sign in", bg="#00769e", fg="white", border="0", relief="solid",
                                    activebackground="#00547c", activeforeground="white", width="26",
                                    command=self.sign_in)
+
+        # If not registered, can move to register frame
         self.lbl_not_reg = Label(self.frame_sign, text="Not registered? Click", font="sans-serif 9", bg="white")
         self.btn_not_reg = Button(self.frame_sign, text="here", bg="white", fg="#00769e", borderwidth=0,
                                   highlightbackground="white", activebackground="white", activeforeground="#00547c",
                                   font="sans-serif 9", underline=True, pady=0, padx=0,
                                   command=lambda: [self.register_frame()])
+
         self.frame_id.place(x=35, y=130)
         self.lbl_id.grid(row=1, column=1)
         self.entry_id.grid(row=1, column=2)
@@ -73,7 +78,6 @@ class HomeScreen:
 
         # Register widgets
         self.frame_register = Frame(self.frame_log, bg="white", width="302", height="390")
-        # self.frame_register.place(x=300, y=0)
 
         self.lbl_your_details_head = Label(self.frame_register, text="Your Details", font="sans-serif 14", bg="white")
         self.lbl_your_details_head.place(x=95, y=10)
@@ -130,6 +134,7 @@ class HomeScreen:
                                    command=self.register)
         self.btn_reg_page.place(x=28, y=310)
 
+        # If already registered, can move to sign in screen
         self.lbl_already_reg = Label(self.frame_register, text="Already registered? Click", bg="white",
                                      font="sans-serif 9")
         self.lbl_already_reg.place(x=28, y=345)
@@ -139,7 +144,7 @@ class HomeScreen:
                                       command=lambda: [self.sign_in_frame()])
         self.btn_already_reg.place(x=180, y=345)
 
-        # Admin Log frame
+        # Admin Log Widgets
         self.frame_admin = Frame(self.frame_log, bg="white", width=300, height=390)
 
         self.lbl_admin_head = Label(self.frame_admin, text="Admin Login", font="sans-serif 14", bg="white")
@@ -165,7 +170,10 @@ class HomeScreen:
 
         self.btn_admin_sign.place(x=27, y=215)
 
+        # Variable to go to admin log in and back to normal log in
         self.admin_key_pressed = False
+
+        # Bind key to toggle admin log in frame
         self.master.bind('<Control-Alt-a>', self.admin_frame)
 
         self.master.mainloop()
@@ -192,6 +200,7 @@ class HomeScreen:
             Misc.lift(self.frame_sign)
             self.admin_key_pressed = False
 
+    # Sign in function that checks if user in database and signs them in
     def sign_in(self):
         try:
             mydb = mysql.connector.connect(user='lifechoices', password='@Lifechoices1234', host='127.0.0.1',
@@ -229,6 +238,7 @@ class HomeScreen:
         except ValueError:
             messagebox.showwarning(message="Invalid ID number format")
 
+    # Checks if registration info valid and sends it to database
     def register(self):
         try:
             mydb = mysql.connector.connect(user='lifechoices', password='@Lifechoices1234', host='127.0.0.1',
@@ -252,8 +262,12 @@ class HomeScreen:
             mycursor.execute(query)
             result = mycursor.fetchall()
 
+            # validity checks
             if result:
                 messagebox.showerror(message="User already exists, try signing in")
+
+            elif name == '' or surname == '' or phone == '' or name_kin == '' or phone_kin == '':
+                messagebox.showerror(message='Make sure all entry fields are filled')
 
             elif len(phone) != 10:
                 messagebox.showwarning(message="Phone number be a ten digit integer")
@@ -279,6 +293,7 @@ class HomeScreen:
         except ValueError:
             messagebox.showwarning(message="Make sure all entries are correctly filled")
 
+    # Admin log in function 
     def admin(self):
         try:
             mydb = mysql.connector.connect(user='lifechoices', password='@Lifechoices1234', host='127.0.0.1',
