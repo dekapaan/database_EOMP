@@ -303,6 +303,9 @@ class HomeScreen:
             else:
                 if result[0][1] == password:
                     messagebox.showinfo(message="success")
+                    self.master.destroy()
+                    import admin_window
+
                 else:
                     messagebox.showerror(message="incorrect password")
 
