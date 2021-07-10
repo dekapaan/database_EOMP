@@ -25,8 +25,8 @@ class AdminGUI:
         self.btn_modify_screen.place(rely=0.45, relx=0.5, anchor=CENTER)
 
         self.btn_view_register = Button(self.frame_options, text="View register", bg="#00769e", fg="white", border="0",
-                                        relief="solid", activebackground="#00547c", activeforeground="white", width="30"
-                                        , command=self.register_frame)
+                                        relief="solid", activebackground="#00547c", activeforeground="white",
+                                        width="30", command=self.register_frame)
 
         self.btn_view_register.place(rely=0.5, relx=0.5, anchor=CENTER)
 
@@ -38,8 +38,18 @@ class AdminGUI:
         # modify /add / remove frame widgets
         self.frame_modify = Frame(self.master, width=1010, height=620, bg="grey")
 
+        # frame for treeview table and scrollbar
+        self.tree_modify_frame = Frame(self.frame_modify)
+
+        # scrollbar for treeview modify
+        self.scroll_modify = Scrollbar(self.tree_modify_frame)
+        self.scroll_modify.pack(side=RIGHT, fill=Y)
+
         # table to view users
-        self.tree_modify = ttk.Treeview(self.frame_modify)
+        self.tree_modify = ttk.Treeview(self.tree_modify_frame, yscrollcommand=self.scroll_modify.set)
+        self.scroll_modify.config(command=self.tree_modify.yview)
+        self.tree_modify.pack()
+
         self.tree_modify['columns'] = ('ID No.', 'Name', 'Surname', 'Phone No.')
 
         self.tree_modify.column('ID No.')
@@ -55,12 +65,12 @@ class AdminGUI:
 
         self.pop_treeview()  # function to populate table
 
-        self.tree_modify.place(rely=0, relx=0.5, anchor=N)
+        self.tree_modify_frame.place(rely=0, relx=0.5, anchor=N)
 
         """frame for entry fields (user name, surname, ID, phone no and admin privilege info. Next of kin name and phone 
         no)"""
-        self.entry_frame = Frame(self.frame_modify, bg='white', width=801, height=350)
-        self.entry_frame.place(rely=0.356, relx=0.1035, anchor=NW)
+        self.entry_frame = Frame(self.frame_modify, bg='white', width=814, height=350)
+        self.entry_frame.place(rely=0.356, relx=0.098, anchor=NW)
 
         self.lbl_user_head = Label(self.entry_frame, text='User Details', font='sans-serif 14', bg='white')
         self.lbl_user_head.place(y=20, x=60)
@@ -148,8 +158,17 @@ class AdminGUI:
 
         # frame and widgets for sign in/out table
         self.frame_register = Frame(self.master, width=1010, height=620, bg='white')
+        # self.frame_register.place(rely=0, relx=0, anchor=NW)
 
-        self.tree_register = ttk.Treeview(self.frame_register)
+        self.tree_register_frame = Frame(self.frame_register)
+
+        # scrollbar for treeview register
+        self.scroll_register = Scrollbar(self.tree_register_frame)
+        self.scroll_register.pack(side=RIGHT, fill=Y)
+
+        self.tree_register = ttk.Treeview(self.tree_register_frame, yscrollcommand=self.scroll_register.set)
+
+        self.scroll_register.config(command=self.tree_register.yview)
         self.tree_register['columns'] = ('Date', 'ID No.', 'Name', 'Time in', 'Time out')
 
         self.tree_register.column('Date')
@@ -173,13 +192,14 @@ class AdminGUI:
 
         # back button
         self.btn_back_register = Button(self.frame_register, text="Back", bg="#00769e", fg="white", border="0",
-                                        relief="solid", activebackground="#00547c", activeforeground="white", width="28"
-                                        , command=self.back)
+                                        relief="solid", activebackground="#00547c", activeforeground="white",
+                                        width="28", command=self.back)
         self.btn_back_register.place(relx=0.5, y=350, anchor=CENTER)
 
         self.pop_tree_register()
 
-        self.tree_register.place(rely=0, relx=0.5, anchor=N)
+        self.tree_register_frame.place(rely=0, relx=0.5, anchor=N)
+        self.tree_register.pack()
 
     # bring modify frame to front
     def modify_screen(self):
@@ -275,6 +295,8 @@ class AdminGUI:
         if self.current_value.get() == 'Yes' and self.entry_password.get() == '':
             messagebox.showerror(message='Password entry field empty')
 
+        elif self.current_id != self.entry_ID.get():
+            messagebox.showerror(message='Cannot change ID')
         # make sure entry fields aren't empty
         elif self.entry_ID.get() == '' or self.entry_name.get() == '' or self.entry_surname.get() == '' or \
                 self.entry_surname == '' or self.entry_kin_name == '' or self.entry_kin_phone == '':
@@ -371,7 +393,7 @@ class AdminGUI:
 
                 mycursor = mydb.cursor()
 
-                if self.current_value == 'Yes':
+                if self.current_value == 'Yes' or self.current_value == '':
                     if self.entry_password.get() == '':
                         messagebox.showerror(message="Admin Password cannot be empty. If you don't want admin "
                                                      "privileges, select 'No'")
@@ -391,6 +413,21 @@ class AdminGUI:
                         mydb.commit()
 
                         self.pop_treeview()
+                        messagebox.showinfo(message='Successfully added user')
+
+                else:
+                    query = "insert into Users (ID, name, surname, phone) values ('{}', '{}', '{}', '{}')".format(
+                        id_no, name, surname, phone)
+                    mycursor.execute(query)
+                    mydb.commit()
+
+                    query_kin = "insert into next_of_kin (ID, name, phone) values ('{}', '{}', '{}')".format(
+                        id_no, name_kin, phone_kin)
+                    mycursor.execute(query_kin)
+                    mydb.commit()
+
+                    self.pop_treeview()
+                    messagebox.showinfo(message='Successfully added user')
 
         except ValueError:
             messagebox.showerror(message="ID number or phone number(s) are invalid")
@@ -490,4 +527,3 @@ class AdminGUI:
 root = Tk()
 app = AdminGUI(root)
 root.mainloop()
-

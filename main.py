@@ -12,6 +12,13 @@ class HomeScreen:
         self.master = master
         self.master.title("Lifechoices Online")
         self.master.geometry("800x650")
+        self.id_no = ''
+
+        # signed in window images
+        self.background_img = PhotoImage(file='images/background/jj-ying-7JX0-bfiuxQ-unsplash.png')
+        self.background_img = self.background_img.subsample(5)
+        self.img_logo = PhotoImage(file='images/LIFE-CHOICES-ACADEMY-LOGO-ON-BLUE-removebg-preview.png')
+        self.img_logo = self.img_logo.subsample(7)
 
         # label for bg image
         image_bg = PhotoImage(file='images/background/george-pagan-iii-WwCTFNpZx8g-unsplash.png')
@@ -58,8 +65,8 @@ class HomeScreen:
         self.entry_id = Entry(self.frame_id)
 
         # sign in button
-        self.btn_sign_in2 = Button(self.frame_sign, text="Sign in", bg="#00769e", fg="white", border="0", relief="solid",
-                                   activebackground="#00547c", activeforeground="white", width="26",
+        self.btn_sign_in2 = Button(self.frame_sign, text="Sign in", bg="#00769e", fg="white", border="0",
+                                   relief="solid", activebackground="#00547c", activeforeground="white", width="26",
                                    command=self.sign_in)
 
         # If not registered, can move to register frame
@@ -209,6 +216,7 @@ class HomeScreen:
             mycursor = mydb.cursor()
 
             id_no = self.entry_id.get()
+            self.id_no = self.entry_id.get()
             rsaidnumber.parse(id_no)
             query = "select * from Users where ID='{}'".format(id_no)
             mycursor.execute(query)
@@ -216,24 +224,29 @@ class HomeScreen:
             if not info:
                 messagebox.showerror(message="User does not exist")
             else:
-                now = datetime.datetime.now()
-                date = "{}".format(now.date())
-                minute = now.minute
-                hour = now.hour
-                if minute <= 9:
-                    minute = '0' + str(minute)
-                if hour <= 9:
-                    hour = '0' + str(hour)
-                time = "{}:{}".format(hour, minute)
-                query1 = "insert into register (Date, ID, name, time_in) values ('{}', '{}', '{}', '{}')".format(date,
-                                                                                                                 id_no,
-                                                                                                                 info[0]
-                                                                                                                 [1],
-                                                                                                                 time)
-                mycursor.execute(query1)
-                mydb.commit()
-                self.master.destroy()
-                import signedin_window
+                query_check_sign = "select * from register where ID='{}' and time_out='--:--'".format(id_no)
+                mycursor.execute(query_check_sign)
+                result = mycursor.fetchall()
+                if not result:
+                    now = datetime.datetime.now()
+                    date = "{}".format(now.date())
+                    minute = now.minute
+                    hour = now.hour
+                    if minute <= 9:
+                        minute = '0' + str(minute)
+                    if hour <= 9:
+                        hour = '0' + str(hour)
+                    time = "{}:{}".format(hour, minute)
+                    query1 = "insert into register (Date, ID, name, time_in) values (" \
+                             "'{}', '{}', '{}', '{}')".format(date, id_no, info[0][1], time)
+                    mycursor.execute(query1)
+                    mydb.commit()
+                    self.master.withdraw()
+                    self.signedin_window()
+
+                else:
+                    self.master.withdraw()
+                    self.signedin_window()
 
         except ValueError:
             messagebox.showwarning(message="Invalid ID number format")
@@ -326,6 +339,63 @@ class HomeScreen:
 
         except ValueError:
             messagebox.showerror(message="Incorrect ID format")
+
+    def signedin_window(self):
+        # window set up
+        window = Toplevel()
+        window.geometry('600x400')
+
+        # background image
+        lbl_img = Label(window, image=self.background_img)
+        lbl_img.place(relx=0, rely=0, anchor=NW)
+
+        # logo image
+        lbl_logo = Label(window, width=600, height=50, bg='black', image=self.img_logo)
+        lbl_logo.place(relx=0, rely=0, anchor=NW)
+
+        # Sign out frame for widgets
+        frame_sign_out = Frame(window, width=300, height=100, bg='white')
+        frame_sign_out.place(relx=0.5, rely=0.5, anchor=CENTER)
+
+        # Heading
+        lbl_signed_in_head = Label(frame_sign_out, text="Signed in", font="sans-serif 15", bg='white')
+        lbl_signed_in_head.place(rely=0.1, relx=0.5, anchor=N)
+
+        # ID entry field
+
+        # Sign out function
+        def sign_out():
+            try:
+                mydb = mysql.connector.connect(user='lifechoices', password='@Lifechoices1234', host='127.0.0.1',
+                                               database='lifechoices_online', auth_plugin='mysql_native_password')
+                mycursor = mydb.cursor()
+
+                # validity check
+                now = datetime.datetime.now()
+                minute = now.minute
+                hour = now.hour
+                if minute <= 9:
+                    minute = '0' + str(minute)
+                if hour <= 9:
+                    hour = '0' + str(hour)
+                time = "{}:{}".format(hour, minute)
+                query = "update register set time_out='{}' where ID='{}' and time_out='--:--'".format(time, self.id_no)
+                mycursor.execute(query)
+                mydb.commit()
+                messagebox.showinfo(message='Logged out. Peace out')
+
+                # back to sign in/ register window
+                root.deiconify()
+                window.destroy()
+
+            except ValueError:
+                messagebox.showerror(message='Invalid ID')
+
+        # Sign out button
+        btn_sign_out = Button(frame_sign_out, text="Sign out", bg="#00769e", fg="white", border="0",
+                              relief="solid", activebackground="#00547c", activeforeground="white", width="40",
+                              command=sign_out)
+        btn_sign_out.place(rely=1, relx=0.5, anchor=S)
 
 
 # instantiation
